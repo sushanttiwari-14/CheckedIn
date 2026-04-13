@@ -7,12 +7,13 @@
 
 import SwiftUI
 
-struct AppColors: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+extension Color {
+    struct brand {
+        static let teal = Color(red: 0.165, green: 0.616, blue: 0.561)
+        static let safeGreen = Color(red: 0.322, green: 0.718, blue: 0.533)
+        static let warning = Color(red: 0.914, green: 0.769, blue: 0.408)
+        static let danger = Color(red: 0.906, green: 0.435, blue: 0.318)
+        static let cardBackground = Color.white
+        static let screenBackground = Color(.systemGray6)
     }
-}
-
-#Preview {
-    AppColors()
 }
