@@ -6,8 +6,10 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CheckFeedView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var viewModel = CheckFeedViewModel()
     @State private var showCamera = false
 
@@ -35,6 +37,13 @@ struct CheckFeedView: View {
                             LazyVStack(spacing: 1) {
                                 ForEach(viewModel.checks, id: \.id) { check in
                                     CheckCardView(check: check)
+                                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                            Button(role: .destructive) {
+                                                viewModel.deleteCheck(check)
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
+                                        }
                                 }
                             }
                             .background(Color(.secondarySystemGroupedBackground))
@@ -56,8 +65,17 @@ struct CheckFeedView: View {
                 }
             }
             .fullScreenCover(isPresented: $showCamera) {
-                // CameraView — Step 4
-                Text("Camera coming in Step 4")
+                CameraView { capturedData in
+                    viewModel.saveCheck(photoData: capturedData)
+                }
+            }
+            .onAppear {
+                viewModel.setup(context: modelContext)
+            }
+            .overlay {
+                if viewModel.isSaving {
+                    savingOverlay
+                }
             }
         }
     }
@@ -93,13 +111,12 @@ struct CheckFeedView: View {
         HStack(spacing: 4) {
             Image(systemName: "checkmark.seal.fill")
                 .foregroundStyle(Color.brand.teal)
-                .font(.system(size: 14))
+                .font(.system(size: 16))
             Text("\(viewModel.checks.filter { $0.isVerified }.count)")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Color.brand.teal)
         }
     }
-
     private var emptyState: some View {
         VStack(spacing: 16) {
             Spacer(minLength: 80)
@@ -133,14 +150,26 @@ struct CheckFeedView: View {
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 32)
-        .fullScreenCover(isPresented: $showCamera) {
-            CameraView { capturedData in
-                viewModel.pendingPhotoData = capturedData
+    }
+
+    private var savingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+            VStack(spacing: 14) {
+                ProgressView()
+                    .tint(.white)
+                    .scaleEffect(1.2)
+                Text("Saving check...")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.white)
             }
+            .padding(28)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
     }
 }
-
 struct SummaryTile: View {
     let value: String
     let label: String
