@@ -1,10 +1,3 @@
-//
-//  CheckFeedView.swift
-//  CheckedIn
-//
-//  Created by sushant tiwari on 12/04/26.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -21,13 +14,9 @@ struct CheckFeedView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        summaryStrip
-                            .padding(.horizontal, 16)
-                            .padding(.top, 8)
-                            .padding(.bottom, 20)
-
                         sectionLabel("Recent Checks")
                             .padding(.horizontal, 16)
+                            .padding(.top, 16)
                             .padding(.bottom, 10)
 
                         if viewModel.checks.isEmpty {
@@ -36,14 +25,10 @@ struct CheckFeedView: View {
                         } else {
                             LazyVStack(spacing: 1) {
                                 ForEach(viewModel.checks, id: \.id) { check in
-                                    CheckCardView(check: check)
-                                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                            Button(role: .destructive) {
-                                                viewModel.deleteCheck(check)
-                                            } label: {
-                                                Label("Delete", systemImage: "trash")
-                                            }
-                                        }
+                                    NavigationLink(destination: CheckDetailView(check: check)) {
+                                        CheckCardView(check: check)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                             .background(Color(.secondarySystemGroupedBackground))
@@ -57,13 +42,8 @@ struct CheckFeedView: View {
 
                 newCheckButton
             }
-            .navigationTitle("CheckedIn")
+            .navigationTitle("My Checks")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    verifiedCounter
-                }
-            }
             .fullScreenCover(isPresented: $showCamera) {
                 CameraView { capturedData in
                     viewModel.saveCheck(photoData: capturedData)
@@ -75,28 +55,10 @@ struct CheckFeedView: View {
             .overlay {
                 if viewModel.isSaving {
                     savingOverlay
+                } else if viewModel.isAnalysing {
+                    analysingOverlay
                 }
             }
-        }
-    }
-
-    private var summaryStrip: some View {
-        HStack(spacing: 12) {
-            SummaryTile(
-                value: "\(viewModel.checks.filter { $0.isVerified }.count)",
-                label: "Verified",
-                color: Color.brand.safeGreen
-            )
-            SummaryTile(
-                value: "\(viewModel.checks.filter { !$0.isVerified }.count)",
-                label: "Needs Review",
-                color: Color.brand.warning
-            )
-            SummaryTile(
-                value: "\(viewModel.checks.count)",
-                label: "Total",
-                color: Color.brand.teal
-            )
         }
     }
 
@@ -107,16 +69,6 @@ struct CheckFeedView: View {
             .kerning(0.5)
     }
 
-    private var verifiedCounter: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "checkmark.seal.fill")
-                .foregroundStyle(Color.brand.teal)
-                .font(.system(size: 16))
-            Text("\(viewModel.checks.filter { $0.isVerified }.count)")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Color.brand.teal)
-        }
-    }
     private var emptyState: some View {
         VStack(spacing: 16) {
             Spacer(minLength: 80)
@@ -154,12 +106,9 @@ struct CheckFeedView: View {
 
     private var savingOverlay: some View {
         ZStack {
-            Color.black.opacity(0.3)
-                .ignoresSafeArea()
+            Color.black.opacity(0.3).ignoresSafeArea()
             VStack(spacing: 14) {
-                ProgressView()
-                    .tint(.white)
-                    .scaleEffect(1.2)
+                ProgressView().tint(.white).scaleEffect(1.2)
                 Text("Saving check...")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.white)
@@ -169,26 +118,20 @@ struct CheckFeedView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
     }
-}
-struct SummaryTile: View {
-    let value: String
-    let label: String
-    let color: Color
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(value)
-                .font(.system(size: 28, weight: .bold))
-                .foregroundStyle(color)
-            Text(label)
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+    private var analysingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.3).ignoresSafeArea()
+            VStack(spacing: 14) {
+                ProgressView().tint(.white).scaleEffect(1.2)
+                Text("Analysing photo...")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.white)
+            }
+            .padding(28)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 14)
-        .padding(.horizontal, 14)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 

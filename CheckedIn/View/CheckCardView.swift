@@ -28,7 +28,6 @@ struct CheckCardView: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color(.tertiarySystemGroupedBackground))
                 .frame(width: 56, height: 56)
-
             if let data = check.photoData, let uiImage = UIImage(data: data) {
                 Image(uiImage: uiImage)
                     .resizable()
@@ -48,12 +47,10 @@ struct CheckCardView: View {
             Text(check.aiLabel)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(.primary)
-
             Label(check.locationName, systemImage: "location.fill")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-
             stateBadge
                 .padding(.top, 2)
         }
@@ -64,7 +61,7 @@ struct CheckCardView: View {
             Circle()
                 .fill(badgeColor)
                 .frame(width: 7, height: 7)
-            Text(check.aiState)
+            Text(badgeText)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(badgeColor)
         }
@@ -74,26 +71,33 @@ struct CheckCardView: View {
         .clipShape(Capsule())
     }
 
-    private var trailingInfo: some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            Image(systemName: check.isVerified ? "checkmark.seal.fill" : "questionmark.circle.fill")
-                .font(.system(size: 24))
-                .foregroundStyle(check.isVerified ? Color.brand.teal : Color.brand.warning)
-
-            Text(timeAgo)
-                .font(.system(size: 12))
-                .foregroundStyle(.tertiary)
+    private var badgeText: String {
+        switch check.aiState {
+        case "OFF":     return "Turned off"
+        case "LOCKED":  return "Locked"
+        case "CLOSED":  return "Closed"
+        case "CHECKED": return "Looks safe"
+        default:        return "Please check now"
         }
     }
 
     private var badgeColor: Color {
         switch check.aiState {
-        case "OFF", "LOCKED":
+        case "OFF", "LOCKED", "CLOSED", "CHECKED":
             return Color.brand.safeGreen
-        case let s where s.contains("CHECK"):
-            return Color.brand.danger
         default:
-            return Color.brand.warning
+            return Color.brand.danger
+        }
+    }
+
+    private var trailingInfo: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            Image(systemName: check.isVerified ? "checkmark.seal.fill" : "exclamationmark.circle.fill")
+                .font(.system(size: 24))
+                .foregroundStyle(check.isVerified ? Color.brand.teal : Color.brand.danger)
+            Text(timeAgo)
+                .font(.system(size: 12))
+                .foregroundStyle(.tertiary)
         }
     }
 
@@ -103,6 +107,9 @@ struct CheckCardView: View {
         case "lock", "door":    return "lock.fill"
         case "window":          return "rectangle.inset.filled"
         case "light":           return "lightbulb.fill"
+        case "tap":             return "drop.fill"
+        case "gas valve":       return "gauge.medium"
+        case "iron":            return "iron.fill"
         default:                return "shield.fill"
         }
     }
@@ -114,30 +121,6 @@ struct CheckCardView: View {
     }
 }
 
-#Preview("Verified") {
-    VStack(spacing: 1) {
-        CheckCardView(check: SafeCheck(
-            timestamp: Date(),
-            locationName: "Kitchen — Home",
-            aiLabel: "Stove",
-            aiState: "OFF",
-            confidenceScore: 0.92,
-            isVerified: true
-        ))
-        CheckCardView(check: SafeCheck(
-            timestamp: Date().addingTimeInterval(-3600),
-            locationName: "Front Door — Home",
-            aiLabel: "Lock",
-            aiState: "LOCKED",
-            confidenceScore: 0.88,
-            isVerified: true
-        ))
-    }
-    .background(Color(.secondarySystemGroupedBackground))
-    .clipShape(RoundedRectangle(cornerRadius: 12))
-    .padding()
-    .background(Color(.systemGroupedBackground))
-}
 #Preview("Verified — Stove") {
     CheckCardView(check: SafeCheck(
         timestamp: Date(),
@@ -153,31 +136,13 @@ struct CheckCardView: View {
     .background(Color(.systemGroupedBackground))
 }
 
-
-#Preview("Needs Review — Door") {
+#Preview("Needs Attention — Door") {
     CheckCardView(check: SafeCheck(
         timestamp: Date().addingTimeInterval(-7200),
         locationName: "Garage — Home",
         aiLabel: "Door",
         aiState: "ON — CHECK THIS",
         confidenceScore: 0.61,
-        isVerified: false
-    ))
-    .background(Color(.secondarySystemGroupedBackground))
-    .clipShape(RoundedRectangle(cornerRadius: 12))
-    .padding()
-    .background(Color(.systemGroupedBackground))
-}
-
-
-#Preview("Empty Photo Fallback") {
-    CheckCardView(check: SafeCheck(
-        photoData: nil,
-        timestamp: Date().addingTimeInterval(-300),
-        locationName: "Living Room — Home",
-        aiLabel: "Light",
-        aiState: "ON — CHECK THIS",
-        confidenceScore: 0.55,
         isVerified: false
     ))
     .background(Color(.secondarySystemGroupedBackground))
