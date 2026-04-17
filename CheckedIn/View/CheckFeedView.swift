@@ -7,6 +7,8 @@ struct CheckFeedView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = CheckFeedViewModel()
     @State private var showCamera = false
+    @State private var showRecheckSheet = false
+    @State private var recheckDestination: SafeCheck? = nil
 
     var body: some View {
         NavigationStack {
@@ -14,7 +16,46 @@ struct CheckFeedView: View {
                 Color(.systemGroupedBackground)
                     .ignoresSafeArea()
 
-                scrollContent
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+
+                        headerSection
+                            .padding(.horizontal, 20)
+                            .padding(.top, 16)
+                            .padding(.bottom, 24)
+
+                        if viewModel.locationPermissionDenied {
+                            locationDeniedBanner
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 16)
+                        }
+
+                        if !viewModel.checks.isEmpty {
+                            sectionLabel("Recent Checks")
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 10)
+
+                            LazyVStack(spacing: 1) {
+                                ForEach(viewModel.checks, id: \.id) { check in
+                                    NavigationLink(
+                                        destination: CheckDetailView(check: check)
+                                    ) {
+                                        CheckCardView(check: check)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .padding(.horizontal, 16)
+                        } else {
+                            emptyState
+                                .padding(.horizontal, 16)
+                        }
+
+                        Spacer(minLength: 110)
+                    }
+                }
 
                 newCheckButton
             }
@@ -24,51 +65,62 @@ struct CheckFeedView: View {
                     viewModel.saveCheck(photoData: capturedData)
                 }
             }
+            .sheet(isPresented: $showRecheckSheet) {
+                if let result = viewModel.recentCheckResult {
+                    RecheckFrictionSheet(
+                        result: result,
+                        onViewLastCheck: {
+                            recheckDestination = result.matchedCheck
+                            showRecheckSheet = false
+                            viewModel.clearRecentCheckResult()
+                        },
+                        onCheckAgain: {
+                            showRecheckSheet = false
+                            viewModel.clearRecentCheckResult()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                showCamera = true
+                            }
+                        },
+                        onDismiss: {
+                            showRecheckSheet = false
+                            viewModel.clearRecentCheckResult()
+                        }
+                    )
+                    .presentationDetents([.height(380)])
+                    .presentationDragIndicator(.visible)
+                    .presentationCornerRadius(24)
+                }
+            }
+            .navigationDestination(item: $recheckDestination) { check in
+                CheckDetailView(check: check)
+            }
             .onAppear {
                 viewModel.setup(context: modelContext)
             }
             .overlay {
                 if viewModel.isSaving {
-                    processingOverlay(text: "Saving check…")
+                    savingOverlay
                 } else if viewModel.isAnalysing {
-                    processingOverlay(text: "Analysing photo…")
+                    analysingOverlay
                 }
             }
         }
     }
 
-    // MARK: - Scroll Content
+    // MARK: — New Check tap handler
 
-    private var scrollContent: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-
-                header
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 28)
-
-                if viewModel.locationPermissionDenied {
-                    locationBanner
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
-                }
-
-                if viewModel.checks.isEmpty {
-                    emptyState
-                        .padding(.horizontal, 16)
-                } else {
-                    feedSection
-                }
-
-                Spacer(minLength: 110)
-            }
+    private func handleNewCheckTap() {
+        let hasDuplicate = viewModel.checkForRecentDuplicate()
+        if hasDuplicate {
+            showRecheckSheet = true
+        } else {
+            showCamera = true
         }
     }
 
-    // MARK: - Header
+    // MARK: — Header
 
-    private var header: some View {
+    private var headerSection: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.shield.fill")
@@ -94,83 +146,16 @@ struct CheckFeedView: View {
         }
     }
 
-    // MARK: - Feed Section
+    // MARK: — Location banner
 
-    private var feedSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Recent Checks")
-                .padding(.horizontal, 16)
-                .padding(.bottom, 10)
-
-            LazyVStack(spacing: 0) {
-                ForEach(viewModel.checks, id: \.id) { check in
-                    NavigationLink(destination: CheckDetailView(check: check)) {
-                        CheckCardView(check: check)
-                    }
-                    .buttonStyle(.plain)
-
-                    if check.id != viewModel.checks.last?.id {
-                        Divider()
-                            .padding(.leading, 78)
-                    }
-                }
-            }
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .padding(.horizontal, 16)
-        }
-    }
-
-    private func sectionLabel(_ text: String) -> some View {
-        Text(text.uppercased())
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(.secondary)
-            .kerning(0.3)
-    }
-
-    // MARK: - Empty State
-
-    private var emptyState: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 72)
-
-            VStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(Color.brand.teal.opacity(0.08))
-                        .frame(width: 88, height: 88)
-                    Image(systemName: "checkmark.shield.fill")
-                        .font(.system(size: 40))
-                        .foregroundStyle(Color.brand.teal)
-                }
-
-                VStack(spacing: 6) {
-                    Text("Nothing checked yet")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .multilineTextAlignment(.center)
-
-                    Text("Take a photo of a lock, stove, or anything\nyou want proof of checking.")
-                        .font(.system(size: 15))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(3)
-                }
-            }
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    // MARK: - Location Banner
-
-    private var locationBanner: some View {
+    private var locationDeniedBanner: some View {
         HStack(spacing: 12) {
             Image(systemName: "location.slash.fill")
-                .font(.system(size: 17))
+                .font(.system(size: 18))
                 .foregroundStyle(Color.brand.warning)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Location access off")
+                Text("Location Access Off")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.primary)
                 Text("Checks won't include your location.")
@@ -190,18 +175,60 @@ struct CheckFeedView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.brand.warning.opacity(0.08))
+        .background(Color.brand.warning.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.brand.warning.opacity(0.25), lineWidth: 0.5)
+                .stroke(Color.brand.warning.opacity(0.3), lineWidth: 1)
         )
     }
 
-    // MARK: - New Check Button
+    // MARK: — Section label
+
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text.uppercased())
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .kerning(0.5)
+    }
+
+    // MARK: — Empty state
+
+    private var emptyState: some View {
+        VStack(spacing: 20) {
+            Spacer(minLength: 60)
+
+            ZStack {
+                Circle()
+                    .fill(Color.brand.teal.opacity(0.08))
+                    .frame(width: 96, height: 96)
+                Image(systemName: "checkmark.shield.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(Color.brand.teal)
+            }
+
+            VStack(spacing: 8) {
+                Text("You haven't checked anything yet")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.center)
+                Text("Take a photo of a stove, lock, or\nanything you want proof of checking.")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 40)
+    }
+
+    // MARK: — New Check button
 
     private var newCheckButton: some View {
-        Button { showCamera = true } label: {
+        Button {
+            handleNewCheckTap()
+        } label: {
             HStack(spacing: 10) {
                 Image(systemName: "camera.fill")
                     .font(.system(size: 17, weight: .semibold))
@@ -213,21 +240,35 @@ struct CheckFeedView: View {
             .frame(height: 56)
             .background(Color.brand.teal)
             .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: Color.brand.teal.opacity(0.3), radius: 12, x: 0, y: 4)
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 32)
     }
 
-    // MARK: - Processing Overlay
+    // MARK: — Overlays
 
-    private func processingOverlay(text: String) -> some View {
+    private var savingOverlay: some View {
         ZStack {
-            Color.black.opacity(0.25).ignoresSafeArea()
+            Color.black.opacity(0.3).ignoresSafeArea()
             VStack(spacing: 14) {
-                ProgressView()
-                    .tint(.white)
-                    .scaleEffect(1.2)
-                Text(text)
+                ProgressView().tint(.white).scaleEffect(1.2)
+                Text("Saving check...")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.white)
+            }
+            .padding(28)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+    }
+
+    private var analysingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.3).ignoresSafeArea()
+            VStack(spacing: 14) {
+                ProgressView().tint(.white).scaleEffect(1.2)
+                Text("Analysing photo...")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.white)
             }

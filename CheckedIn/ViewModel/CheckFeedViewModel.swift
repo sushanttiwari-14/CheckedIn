@@ -17,14 +17,17 @@ class CheckFeedViewModel {
     var pendingPhotoData: Data? = nil
     var isSaving: Bool = false
     var isAnalysing: Bool = false
-    
+    var recentCheckResult: RecentCheckResult? = nil
+
     var locationPermissionDenied: Bool {
         locationService.permissionDenied
     }
-    
+
     private var modelContext: ModelContext?
     private let locationService = LocationService()
     private let visionService = VisionService()
+
+    private let recheckWindowMinutes: Int = 30
 
     func setup(context: ModelContext) {
         self.modelContext = context
@@ -42,6 +45,34 @@ class CheckFeedViewModel {
         } catch {
             print("Fetch error: \(error)")
         }
+    }
+
+    // Called when user taps New Check
+    // Returns true if friction should be shown, false if camera can open directly
+    func checkForRecentDuplicate() -> Bool {
+        let windowStart = Date().addingTimeInterval(-Double(recheckWindowMinutes * 60))
+
+        let recentChecks = checks.filter {
+            $0.timestamp > windowStart &&
+            !$0.aiLabel.isEmpty &&
+            $0.aiLabel != "Analysing..." &&
+            $0.aiLabel != "Item"
+        }
+
+        guard let mostRecent = recentChecks.first else { return false }
+
+        let minutesAgo = Int(Date().timeIntervalSince(mostRecent.timestamp) / 60)
+
+        recentCheckResult = RecentCheckResult(
+            matchedCheck: mostRecent,
+            label: mostRecent.aiLabel,
+            minutesAgo: minutesAgo
+        )
+        return true
+    }
+
+    func clearRecentCheckResult() {
+        recentCheckResult = nil
     }
 
     func saveCheck(photoData: Data) {
