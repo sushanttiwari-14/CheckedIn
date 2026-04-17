@@ -17,7 +17,11 @@ class CheckFeedViewModel {
     var pendingPhotoData: Data? = nil
     var isSaving: Bool = false
     var isAnalysing: Bool = false
-
+    
+    var locationPermissionDenied: Bool {
+        locationService.permissionDenied
+    }
+    
     private var modelContext: ModelContext?
     private let locationService = LocationService()
     private let visionService = VisionService()

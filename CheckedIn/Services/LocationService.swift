@@ -12,6 +12,7 @@ import Observation
 class LocationService: NSObject, CLLocationManagerDelegate {
     var currentLocation: CLLocation? = nil
     var currentLocationName: String = "Unknown Location"
+    var permissionDenied: Bool = false
 
     private let manager = CLLocationManager()
     private let geocoder = CLGeocoder()
@@ -28,24 +29,28 @@ class LocationService: NSObject, CLLocationManagerDelegate {
             manager.requestWhenInUseAuthorization()
         case .authorizedWhenInUse, .authorizedAlways:
             manager.startUpdatingLocation()
+        case .denied, .restricted:
+            permissionDenied = true
         default:
             break
         }
     }
 
-    func locationManager(
-        _ manager: CLLocationManager,
-        didUpdateLocations locations: [CLLocation]
-    ) {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         currentLocation = location
         reverseGeocode(location)
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        if manager.authorizationStatus == .authorizedWhenInUse ||
-           manager.authorizationStatus == .authorizedAlways {
+        switch manager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            permissionDenied = false
             manager.startUpdatingLocation()
+        case .denied, .restricted:
+            permissionDenied = true
+        default:
+            break
         }
     }
 
