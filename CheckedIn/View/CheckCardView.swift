@@ -4,6 +4,7 @@
 //
 //  Created by sushant tiwari on 12/04/26.
 //
+// CheckCardView.swift
 
 import SwiftUI
 
@@ -12,10 +13,10 @@ struct CheckCardView: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            photoThumbnail
-            cardInfo
-            Spacer()
-            trailingInfo
+            thumbnail
+            cardBody
+            Spacer(minLength: 0)
+            trailingArea
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 13)
@@ -23,101 +24,131 @@ struct CheckCardView: View {
         .contentShape(Rectangle())
     }
 
-    private var photoThumbnail: some View {
+    // MARK: - Thumbnail
+
+    private var thumbnail: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color(.tertiarySystemGroupedBackground))
-                .frame(width: 56, height: 56)
-            if let data = check.photoData, let uiImage = UIImage(data: data) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 56, height: 56)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            } else {
-                Image(systemName: iconForLabel(check.aiLabel))
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundStyle(Color.brand.teal)
-            }
+                .fill(thumbnailBackground)
+                .frame(width: 48, height: 48)
+            Image(systemName: itemIcon)
+                .font(.system(size: 22))
+                .foregroundStyle(thumbnailIconColor)
         }
     }
 
-    private var cardInfo: some View {
-        VStack(alignment: .leading, spacing: 4) {
+    // MARK: - Card Body
+
+    private var cardBody: some View {
+        VStack(alignment: .leading, spacing: 3) {
             Text(check.aiLabel)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.primary)
-            Label(check.locationName, systemImage: "location.fill")
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-            stateBadge
-                .padding(.top, 2)
-        }
-    }
 
-    private var stateBadge: some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(badgeColor)
-                .frame(width: 7, height: 7)
-            Text(badgeText)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(badgeColor)
-        }
-        .padding(.horizontal, 9)
-        .padding(.vertical, 4)
-        .background(badgeColor.opacity(0.1))
-        .clipShape(Capsule())
-    }
+            Text(verdictText)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(verdictColor)
 
-    private var badgeText: String {
-        switch check.aiState {
-        case "OFF":     return "Turned off"
-        case "LOCKED":  return "Locked"
-        case "CLOSED":  return "Closed"
-        case "CHECKED": return "Looks safe"
-        default:        return "Please check now"
-        }
-    }
-
-    private var badgeColor: Color {
-        switch check.aiState {
-        case "OFF", "LOCKED", "CLOSED", "CHECKED":
-            return Color.brand.safeGreen
-        default:
-            return Color.brand.danger
-        }
-    }
-
-    private var trailingInfo: some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            Image(systemName: check.isVerified ? "checkmark.seal.fill" : "exclamationmark.circle.fill")
-                .font(.system(size: 24))
-                .foregroundStyle(check.isVerified ? Color.brand.teal : Color.brand.danger)
-            Text(timeAgo)
+            Text(metaText)
                 .font(.system(size: 12))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
         }
     }
 
-    private func iconForLabel(_ label: String) -> String {
-        switch label.lowercased() {
-        case "stove", "oven":   return "flame.fill"
-        case "lock", "door":    return "lock.fill"
-        case "window":          return "rectangle.inset.filled"
-        case "light":           return "lightbulb.fill"
-        case "tap":             return "drop.fill"
-        case "gas valve":       return "gauge.medium"
-        case "iron":            return "iron.fill"
-        default:                return "shield.fill"
+    // MARK: - Trailing
+
+    private var trailingArea: some View {
+        HStack(spacing: 8) {
+            if check.isVerified {
+                Circle()
+                    .fill(Color.brand.teal)
+                    .frame(width: 8, height: 8)
+            }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color(.tertiaryLabel))
         }
     }
 
-    private var timeAgo: String {
-        let f = RelativeDateTimeFormatter()
-        f.unitsStyle = .abbreviated
-        return f.localizedString(for: check.timestamp, relativeTo: Date())
+    // MARK: - Computed Properties
+
+    private var verdictText: String {
+        let state = check.aiState.uppercased()
+        switch check.aiLabel {
+        case "Stove", "Iron", "Light", "Tap", "Gas Valve":
+            if state.contains("OFF") || state.contains("CLOSED") { return "Off" }
+            if state.contains("ON") { return "Needs checking" }
+        case "Lock", "Door":
+            if state.contains("LOCKED") { return "Locked" }
+            if state.contains("UNLOCKED") { return "Needs checking" }
+        case "Window":
+            if state.contains("CLOSED") { return "Closed" }
+            if state.contains("OPEN") { return "Needs checking" }
+        default:
+            break
+        }
+        if state.contains("CHECK") { return "Needs checking" }
+        if state.contains("CHECKED") { return "Checked" }
+        return check.aiState
+    }
+
+    private var verdictColor: Color {
+        let state = check.aiState.uppercased()
+        if state.contains("CHECK THIS") || state.contains("UNLOCKED") || state.contains("OPEN") || state.contains("ON —") {
+            return Color.brand.warning
+        }
+        return Color.brand.teal
+    }
+
+    private var metaText: String {
+        let time = check.timestamp.formatted(date: .omitted, time: .shortened)
+        let day = Calendar.current.isDateInToday(check.timestamp) ? "Today" :
+                  Calendar.current.isDateInYesterday(check.timestamp) ? "Yesterday" :
+                  check.timestamp.formatted(.dateTime.weekday(.wide))
+        let location = check.locationName.isEmpty ? "" : " · \(check.locationName)"
+        return "\(day) · \(time)\(location)"
+    }
+
+    private var itemIcon: String {
+        switch check.aiLabel {
+        case "Stove":      return "flame"
+        case "Lock":       return "lock.fill"
+        case "Door":       return "door.left.hand.closed"
+        case "Window":     return "window.casement"
+        case "Light":      return "lightbulb.fill"
+        case "Iron":       return "humidity.fill"
+        case "Tap":        return "drop.fill"
+        case "Gas Valve":  return "gauge.with.dots.needle.bottom.50percent"
+        default:           return "checkmark.circle.fill"
+        }
+    }
+
+    private var thumbnailBackground: Color {
+        switch check.aiLabel {
+        case "Stove":      return Color(red: 1.0,  green: 0.95, blue: 0.90)
+        case "Lock",
+             "Door":       return Color(red: 0.91, green: 0.97, blue: 0.96)
+        case "Window":     return Color(red: 0.90, green: 0.94, blue: 1.0)
+        case "Light":      return Color(red: 1.0,  green: 0.97, blue: 0.88)
+        case "Iron":       return Color(red: 0.93, green: 0.90, blue: 1.0)
+        case "Tap":        return Color(red: 0.88, green: 0.95, blue: 1.0)
+        case "Gas Valve":  return Color(red: 1.0,  green: 0.92, blue: 0.90)
+        default:           return Color(.systemGray5)
+        }
+    }
+
+    private var thumbnailIconColor: Color {
+        switch check.aiLabel {
+        case "Stove":      return Color(red: 0.85, green: 0.45, blue: 0.20)
+        case "Lock",
+             "Door":       return Color.brand.teal
+        case "Window":     return Color(red: 0.25, green: 0.50, blue: 0.90)
+        case "Light":      return Color(red: 0.85, green: 0.65, blue: 0.10)
+        case "Iron":       return Color(red: 0.50, green: 0.35, blue: 0.90)
+        case "Tap":        return Color(red: 0.20, green: 0.55, blue: 0.90)
+        case "Gas Valve":  return Color.brand.danger
+        default:           return Color(.secondaryLabel)
+        }
     }
 }
 
