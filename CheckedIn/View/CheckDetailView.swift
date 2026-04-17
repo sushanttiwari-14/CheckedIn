@@ -9,235 +9,218 @@ import SwiftUI
 
 struct CheckDetailView: View {
     let check: SafeCheck
+
     @Environment(\.dismiss) private var dismiss
+
+    private var verdict: VerdictFormatter.Verdict {
+        VerdictFormatter.verdict(for: check)
+    }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
                 photoSection
-                verdictBanner
-                detailsSection
-                footerNote
+                proofSection
             }
         }
-        .ignoresSafeArea(edges: .top)
-        .background(Color(.systemGroupedBackground))
-        .overlay(alignment: .topLeading) { closeButton }
+        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Proof")
+                    .font(.system(size: 17, weight: .semibold))
+            }
+        }
     }
 
+    // MARK: — Photo
+
     private var photoSection: some View {
-        ZStack(alignment: .bottom) {
+        Group {
             if let data = check.photoData, let uiImage = UIImage(data: data) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
                     .frame(maxWidth: .infinity)
-                    .frame(height: 380)
+                    .frame(height: 300)
                     .clipped()
             } else {
-                Rectangle()
-                    .fill(Color(.systemGray4))
-                    .frame(height: 380)
-                    .overlay {
-                        Image(systemName: iconForLabel(check.aiLabel))
-                            .font(.system(size: 64))
-                            .foregroundStyle(Color.brand.teal)
-                    }
-            }
-
-            LinearGradient(
-                colors: [.clear, .black.opacity(0.55)],
-                startPoint: .center,
-                endPoint: .bottom
-            )
-            .frame(height: 380)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(check.aiLabel)
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(.white)
-                HStack(spacing: 4) {
-                    Image(systemName: "location.fill")
-                        .font(.system(size: 12))
-                    Text(check.locationName)
-                        .font(.system(size: 14))
+                ZStack {
+                    Color(.secondarySystemGroupedBackground)
+                    Image(systemName: "photo")
+                        .font(.system(size: 36))
+                        .foregroundStyle(Color(.tertiaryLabel))
                 }
-                .foregroundStyle(.white.opacity(0.85))
+                .frame(height: 300)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 20)
-            .padding(.bottom, 24)
         }
     }
 
-    private var verdictBanner: some View {
+    // MARK: — Proof Block
+
+    private var proofSection: some View {
+        VStack(spacing: 0) {
+            verdictCard
+                .padding(.horizontal, 16)
+                .padding(.top, 20)
+
+            metaCard
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+
+            closureNote
+                .padding(.horizontal, 16)
+                .padding(.top, 20)
+                .padding(.bottom, 48)
+        }
+    }
+
+    // MARK: — Verdict Card
+
+    private var verdictCard: some View {
+        VStack(spacing: 20) {
+            symbolBadge
+            verdictText
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 28)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var symbolBadge: some View {
+        ZStack {
+            Circle()
+                .fill(verdict.symbolColor.opacity(0.12))
+                .frame(width: 72, height: 72)
+            Image(systemName: verdict.symbol)
+                .font(.system(size: 36))
+                .foregroundStyle(verdict.symbolColor)
+        }
+    }
+
+    private var verdictText: some View {
+        VStack(spacing: 8) {
+            Text(verdict.headline)
+                .font(.system(size: 26, weight: .bold))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if verdict.isConfirmed {
+                Text("Confirmed by photo")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+            } else if check.aiState == "Analysing..." || check.aiState == "Please wait" {
+                Text("Analysis in progress")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Check the photo above")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Color(red: 0.914, green: 0.769, blue: 0.408))
+            }
+        }
+    }
+
+    // MARK: — Meta Card
+
+    private var metaCard: some View {
+        VStack(spacing: 0) {
+            metaRow(
+                icon: "clock.fill",
+                iconColor: Color(red: 0.165, green: 0.616, blue: 0.561),
+                label: "Checked at",
+                value: formattedTime
+            )
+
+            Divider()
+                .padding(.leading, 52)
+
+            metaRow(
+                icon: "location.fill",
+                iconColor: Color(red: 0.165, green: 0.616, blue: 0.561),
+                label: "Location",
+                value: check.locationName.isEmpty ? "Unknown location" : check.locationName
+            )
+        }
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func metaRow(icon: String, iconColor: Color, label: String, value: String) -> some View {
         HStack(spacing: 16) {
             ZStack {
-                Circle()
-                    .fill(verdictColor.opacity(0.15))
-                    .frame(width: 64, height: 64)
-                Image(systemName: verdictIcon)
-                    .font(.system(size: 30, weight: .semibold))
-                    .foregroundStyle(verdictColor)
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(iconColor.opacity(0.12))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundStyle(iconColor)
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text(verdictHeadline)
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(verdictColor)
-                Text(verdictMessage)
-                    .font(.system(size: 14))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text(value)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.primary)
             }
 
             Spacer()
         }
-        .padding(20)
-        .background(Color(.secondarySystemGroupedBackground))
-    }
-
-    private var detailsSection: some View {
-        VStack(spacing: 1) {
-            detailRow(
-                icon: "clock.fill",
-                label: "Checked at",
-                value: formattedDate
-            )
-            detailRow(
-                icon: "location.fill",
-                label: "Location",
-                value: check.locationName
-            )
-            detailRow(
-                icon: "cpu.fill",
-                label: "Analysed by",
-                value: "On-Device AI"
-            )
-        }
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal, 16)
-        .padding(.top, 20)
+        .padding(.vertical, 14)
     }
 
-    private func detailRow(
-        icon: String,
-        label: String,
-        value: String,
-        valueColor: Color = .primary
-    ) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 14))
-                .foregroundStyle(Color.brand.teal)
-                .frame(width: 20)
-            Text(label)
-                .font(.system(size: 15))
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(valueColor)
-                .multilineTextAlignment(.trailing)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 13)
-        .background(Color(.secondarySystemGroupedBackground))
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Color(.systemGray5))
-                .frame(height: 0.5)
-                .padding(.leading, 50)
-        }
-    }
+    // MARK: — Closure Note
 
-    private var footerNote: some View {
-        VStack(spacing: 8) {
+    private var closureNote: some View {
+        HStack(spacing: 12) {
             Image(systemName: "lock.shield.fill")
-                .font(.system(size: 24))
-                .foregroundStyle(Color.brand.teal.opacity(0.5))
-            Text("Stored privately on your device.\nYour photos never leave your phone.")
-                .font(.system(size: 13))
+                .font(.system(size: 16))
+                .foregroundStyle(Color(red: 0.165, green: 0.616, blue: 0.561))
+
+            Text("This photo is your proof. You can trust it.")
+                .font(.system(size: 14))
                 .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer()
         }
-        .padding(24)
-        .padding(.bottom, 16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(
+            Color(red: 0.165, green: 0.616, blue: 0.561).opacity(0.07)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(red: 0.165, green: 0.616, blue: 0.561).opacity(0.2), lineWidth: 1)
+        )
     }
 
-    private var closeButton: some View {
-        Button { dismiss() } label: {
-            Image(systemName: "xmark")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 32, height: 32)
-                .background(.black.opacity(0.4))
-                .clipShape(Circle())
-        }
-        .padding(.top, 56)
-        .padding(.leading, 20)
-    }
+    // MARK: — Formatting
 
-    private var verdictHeadline: String {
-        switch check.aiState {
-        case "OFF":     return "\(check.aiLabel) is OFF"
-        case "LOCKED":  return "\(check.aiLabel) is LOCKED"
-        case "CLOSED":  return "\(check.aiLabel) is CLOSED"
-        case "CHECKED": return "\(check.aiLabel) looks safe"
-        default:        return "Couldn't confirm"
-        }
-    }
+    private var formattedTime: String {
+        let cal = Calendar.current
+        let formatter = DateFormatter()
 
-    private var verdictColor: Color {
-        switch check.aiState {
-        case "OFF", "LOCKED", "CLOSED", "CHECKED":
-            return Color.brand.safeGreen
-        default:
-            return Color.brand.danger
+        if cal.isDateInToday(check.timestamp) {
+            formatter.dateFormat = "'Today at' h:mm a"
+        } else if cal.isDateInYesterday(check.timestamp) {
+            formatter.dateFormat = "'Yesterday at' h:mm a"
+        } else {
+            formatter.dateFormat = "EEEE 'at' h:mm a"
         }
-    }
 
-    private var verdictIcon: String {
-        switch check.aiState {
-        case "OFF", "LOCKED", "CLOSED", "CHECKED":
-            return "checkmark.shield.fill"
-        default:
-            return "exclamationmark.triangle.fill"
-        }
-    }
-
-    private var verdictMessage: String {
-        switch check.aiState {
-        case "OFF":     return "This was off when you checked."
-        case "LOCKED":  return "This was locked when you checked."
-        case "CLOSED":  return "This was closed when you checked."
-        case "CHECKED": return "This looked safe when you checked."
-        default:        return "Couldn't confirm — please go back and check now."
-        }
-    }
-
-    private var formattedDate: String {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        f.timeStyle = .short
-        return f.string(from: check.timestamp)
-    }
-
-    private func iconForLabel(_ label: String) -> String {
-        switch label.lowercased() {
-        case "stove", "oven":   return "flame.fill"
-        case "lock", "door":    return "lock.fill"
-        case "window":          return "rectangle.inset.filled"
-        case "light":           return "lightbulb.fill"
-        case "tap":             return "drop.fill"
-        case "gas valve":       return "gauge.medium"
-        case "iron":            return "iron.fill"
-        default:                return "shield.fill"
-        }
+        formatter.amSymbol = "am"
+        formatter.pmSymbol = "pm"
+        return formatter.string(from: check.timestamp)
     }
 }
-
 #Preview("Safe Check") {
     CheckDetailView(check: SafeCheck(
         timestamp: Date(),
