@@ -14,6 +14,15 @@ struct CheckFeedView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
+
+                        // Show this banner only when location is denied
+                        if viewModel.locationPermissionDenied {
+                            locationDeniedBanner
+                                .padding(.horizontal, 16)
+                                .padding(.top, 12)
+                                .padding(.bottom, 4)
+                        }
+
                         sectionLabel("Recent Checks")
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
@@ -25,7 +34,9 @@ struct CheckFeedView: View {
                         } else {
                             LazyVStack(spacing: 1) {
                                 ForEach(viewModel.checks, id: \.id) { check in
-                                    NavigationLink(destination: CheckDetailView(check: check)) {
+                                    NavigationLink(
+                                        destination: CheckDetailView(check: check)
+                                    ) {
                                         CheckCardView(check: check)
                                     }
                                     .buttonStyle(.plain)
@@ -62,12 +73,54 @@ struct CheckFeedView: View {
         }
     }
 
+    // MARK: - Location Denied Banner
+
+    private var locationDeniedBanner: some View {
+        HStack(spacing: 12) {
+
+            Image(systemName: "location.slash.fill")
+                .font(.system(size: 18))
+                .foregroundStyle(Color.brand.warning)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Location Access Off")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text("Checks won't include your location.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Button("Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(Color.brand.teal)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.brand.warning.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.brand.warning.opacity(0.3), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Section Label
+
     private func sectionLabel(_ text: String) -> some View {
         Text(text.uppercased())
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(.secondary)
             .kerning(0.5)
     }
+
+    // MARK: - Empty State
 
     private var emptyState: some View {
         VStack(spacing: 16) {
@@ -88,6 +141,8 @@ struct CheckFeedView: View {
         .padding(.top, 40)
     }
 
+    // MARK: - New Check Button
+
     private var newCheckButton: some View {
         Button {
             showCamera = true
@@ -103,6 +158,8 @@ struct CheckFeedView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 32)
     }
+
+    // MARK: - Overlays
 
     private var savingOverlay: some View {
         ZStack {
