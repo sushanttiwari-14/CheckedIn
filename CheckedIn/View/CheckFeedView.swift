@@ -8,6 +8,7 @@ struct CheckFeedView: View {
     @State private var viewModel = CheckFeedViewModel()
     @State private var showCamera = false
     @State private var showRecheckSheet = false
+    @State private var showSession = false
     @State private var recheckDestination: SafeCheck? = nil
 
     var body: some View {
@@ -53,17 +54,20 @@ struct CheckFeedView: View {
                                 .padding(.horizontal, 16)
                         }
 
-                        Spacer(minLength: 110)
+                        Spacer(minLength: 130)
                     }
                 }
 
-                newCheckButton
+                bottomButtons
             }
             .navigationBarHidden(true)
             .fullScreenCover(isPresented: $showCamera) {
                 CameraView { capturedData in
                     viewModel.saveCheck(photoData: capturedData)
                 }
+            }
+            .fullScreenCover(isPresented: $showSession) {
+                SessionView(locationService: LocationService())
             }
             .sheet(isPresented: $showRecheckSheet) {
                 if let result = viewModel.recentCheckResult {
@@ -223,27 +227,60 @@ struct CheckFeedView: View {
         .padding(.top, 40)
     }
 
-    // MARK: — New Check button
+    // MARK: — Bottom Buttons
 
-    private var newCheckButton: some View {
-        Button {
-            handleNewCheckTap()
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "camera.fill")
-                    .font(.system(size: 17, weight: .semibold))
-                Text("New Check")
-                    .font(.system(size: 17, weight: .semibold))
+    private var bottomButtons: some View {
+        VStack(spacing: 10) {
+            Button {
+                showSession = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "figure.walk")
+                        .font(.system(size: 16, weight: .semibold))
+                    Text("I'm Leaving")
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                .foregroundStyle(Color.brand.teal)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(Color.brand.teal.opacity(0.10))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.brand.teal.opacity(0.25), lineWidth: 1)
+                    )
             }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(Color.brand.teal)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .shadow(color: Color.brand.teal.opacity(0.3), radius: 12, x: 0, y: 4)
+
+            Button {
+                handleNewCheckTap()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 17, weight: .semibold))
+                    Text("New Check")
+                        .font(.system(size: 17, weight: .semibold))
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(Color.brand.teal)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: Color.brand.teal.opacity(0.3), radius: 12, x: 0, y: 4)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 32)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(.systemGroupedBackground).opacity(0),
+                    Color(.systemGroupedBackground)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        )
     }
 
     // MARK: — Overlays

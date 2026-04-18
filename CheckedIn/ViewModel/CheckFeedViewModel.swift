@@ -26,6 +26,7 @@ class CheckFeedViewModel {
     private var modelContext: ModelContext?
     private let locationService = LocationService()
     private let visionService = VisionService()
+    private let speechService = SpeechService.shared
 
     private let recheckWindowMinutes: Int = 30
 
@@ -47,8 +48,6 @@ class CheckFeedViewModel {
         }
     }
 
-    // Called when user taps New Check
-    // Returns true if friction should be shown, false if camera can open directly
     func checkForRecentDuplicate() -> Bool {
         let windowStart = Date().addingTimeInterval(-Double(recheckWindowMinutes * 60))
 
@@ -127,6 +126,11 @@ class CheckFeedViewModel {
             }
 
             self.isAnalysing = false
+
+            if check.isVerified {
+                let verdict = VerdictFormatter.verdict(for: check)
+                self.speechService.speak(verdict.headline)
+            }
         }
     }
 
