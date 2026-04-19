@@ -11,144 +11,105 @@ import SwiftUI
 struct CheckCardView: View {
     let check: SafeCheck
 
+    private var verdict: VerdictFormatter.Verdict {
+        VerdictFormatter.verdict(for: check)
+    }
+
     var body: some View {
         HStack(spacing: 14) {
             thumbnail
-            cardBody
-            Spacer(minLength: 0)
-            trailingArea
+            content
+            Spacer(minLength: 8)
+            chevron
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 13)
+        .padding(.vertical, 12)
         .background(Color(.secondarySystemGroupedBackground))
         .contentShape(Rectangle())
     }
 
-    // MARK: - Thumbnail
+    // MARK: — Thumbnail
 
     private var thumbnail: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(thumbnailBackground)
-                .frame(width: 48, height: 48)
-            Image(systemName: itemIcon)
-                .font(.system(size: 22))
-                .foregroundStyle(thumbnailIconColor)
-        }
-    }
-
-    // MARK: - Card Body
-
-    private var cardBody: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(check.aiLabel)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.primary)
-
-            Text(verdictText)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(verdictColor)
-
-            Text(metaText)
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    // MARK: - Trailing
-
-    private var trailingArea: some View {
-        HStack(spacing: 8) {
-            if check.isVerified {
-                Circle()
-                    .fill(Color.brand.teal)
-                    .frame(width: 8, height: 8)
+        Group {
+            if let data = check.photoData, let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 52, height: 52)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            } else {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.brand.tealSubtle)
+                    Image(systemName: "photo")
+                        .font(.system(size: 20))
+                        .foregroundStyle(Color.brand.teal.opacity(0.5))
+                }
+                .frame(width: 52, height: 52)
             }
-            Image(systemName: "chevron.right")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color(.tertiaryLabel))
         }
     }
 
-    // MARK: - Computed Properties
+    // MARK: — Content
 
-    private var verdictText: String {
-        let state = check.aiState.uppercased()
-        switch check.aiLabel {
-        case "Stove", "Iron", "Light", "Tap", "Gas Valve":
-            if state.contains("OFF") || state.contains("CLOSED") { return "Off" }
-            if state.contains("ON") { return "Needs checking" }
-        case "Lock", "Door":
-            if state.contains("LOCKED") { return "Locked" }
-            if state.contains("UNLOCKED") { return "Needs checking" }
-        case "Window":
-            if state.contains("CLOSED") { return "Closed" }
-            if state.contains("OPEN") { return "Needs checking" }
-        default:
-            break
-        }
-        if state.contains("CHECK") { return "Needs checking" }
-        if state.contains("CHECKED") { return "Checked" }
-        return check.aiState
-    }
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Image(systemName: verdict.symbol)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(verdict.symbolColor)
 
-    private var verdictColor: Color {
-        let state = check.aiState.uppercased()
-        if state.contains("CHECK THIS") || state.contains("UNLOCKED") || state.contains("OPEN") || state.contains("ON —") {
-            return Color.brand.warning
-        }
-        return Color.brand.teal
-    }
+                Text(verdict.headline)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+            }
 
-    private var metaText: String {
-        let time = check.timestamp.formatted(date: .omitted, time: .shortened)
-        let day = Calendar.current.isDateInToday(check.timestamp) ? "Today" :
-                  Calendar.current.isDateInYesterday(check.timestamp) ? "Yesterday" :
-                  check.timestamp.formatted(.dateTime.weekday(.wide))
-        let location = check.locationName.isEmpty ? "" : " · \(check.locationName)"
-        return "\(day) · \(time)\(location)"
-    }
+            Text(formattedTime)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
 
-    private var itemIcon: String {
-        switch check.aiLabel {
-        case "Stove":      return "flame"
-        case "Lock":       return "lock.fill"
-        case "Door":       return "door.left.hand.closed"
-        case "Window":     return "window.casement"
-        case "Light":      return "lightbulb.fill"
-        case "Iron":       return "humidity.fill"
-        case "Tap":        return "drop.fill"
-        case "Gas Valve":  return "gauge.with.dots.needle.bottom.50percent"
-        default:           return "checkmark.circle.fill"
+            if !check.locationName.isEmpty && check.locationName != "Unknown Location" {
+                HStack(spacing: 3) {
+                    Image(systemName: "location.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color(.tertiaryLabel))
+                    Text(check.locationName)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color(.tertiaryLabel))
+                        .lineLimit(1)
+                }
+            }
         }
     }
 
-    private var thumbnailBackground: Color {
-        switch check.aiLabel {
-        case "Stove":      return Color(red: 1.0,  green: 0.95, blue: 0.90)
-        case "Lock",
-             "Door":       return Color(red: 0.91, green: 0.97, blue: 0.96)
-        case "Window":     return Color(red: 0.90, green: 0.94, blue: 1.0)
-        case "Light":      return Color(red: 1.0,  green: 0.97, blue: 0.88)
-        case "Iron":       return Color(red: 0.93, green: 0.90, blue: 1.0)
-        case "Tap":        return Color(red: 0.88, green: 0.95, blue: 1.0)
-        case "Gas Valve":  return Color(red: 1.0,  green: 0.92, blue: 0.90)
-        default:           return Color(.systemGray5)
-        }
+    // MARK: — Chevron
+
+    private var chevron: some View {
+        Image(systemName: "chevron.right")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(Color(.tertiaryLabel))
     }
 
-    private var thumbnailIconColor: Color {
-        switch check.aiLabel {
-        case "Stove":      return Color(red: 0.85, green: 0.45, blue: 0.20)
-        case "Lock",
-             "Door":       return Color.brand.teal
-        case "Window":     return Color(red: 0.25, green: 0.50, blue: 0.90)
-        case "Light":      return Color(red: 0.85, green: 0.65, blue: 0.10)
-        case "Iron":       return Color(red: 0.50, green: 0.35, blue: 0.90)
-        case "Tap":        return Color(red: 0.20, green: 0.55, blue: 0.90)
-        case "Gas Valve":  return Color.brand.danger
-        default:           return Color(.secondaryLabel)
+    // MARK: — Time formatting
+
+    private var formattedTime: String {
+        let cal = Calendar.current
+        let formatter = DateFormatter()
+
+        if cal.isDateInToday(check.timestamp) {
+            formatter.dateFormat = "h:mm a"
+        } else if cal.isDateInYesterday(check.timestamp) {
+            formatter.dateFormat = "'Yesterday' h:mm a"
+        } else {
+            formatter.dateFormat = "EEE h:mm a"
         }
+
+        formatter.amSymbol = "am"
+        formatter.pmSymbol = "pm"
+        return formatter.string(from: check.timestamp)
     }
 }
 

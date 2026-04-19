@@ -118,6 +118,7 @@ struct CheckFeedView: View {
     // MARK: — New Check tap handler
 
     private func handleNewCheckTap() {
+        HapticService.impact(.medium)
         let hasDuplicate = viewModel.checkForRecentDuplicate()
         if hasDuplicate {
             showRecheckSheet = true
@@ -147,6 +148,7 @@ struct CheckFeedView: View {
             Spacer()
 
             Button {
+                HapticService.selection()
                 showSettings = true
             } label: {
                 ZStack {
@@ -154,13 +156,13 @@ struct CheckFeedView: View {
                         .fill(Color(.secondarySystemBackground))
                         .overlay(
                             Circle()
-                                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                                .stroke(Color(.separator).opacity(0.5), lineWidth: 0.5)
                         )
                         .frame(width: 38, height: 38)
 
                     Image(systemName: "gearshape.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Color(.label).opacity(0.75))
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(Color(.secondaryLabel))
                 }
                 .frame(width: 44, height: 44)
                 .contentShape(Circle())
@@ -210,11 +212,11 @@ struct CheckFeedView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.brand.warning.opacity(0.1))
+        .background(Color.brand.warning.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.brand.warning.opacity(0.3), lineWidth: 1)
+                .stroke(Color.brand.warning.opacity(0.3), lineWidth: 0.5)
         )
     }
 
@@ -222,7 +224,7 @@ struct CheckFeedView: View {
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text.uppercased())
-            .font(.system(size: 13, weight: .semibold))
+            .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(.secondary)
             .kerning(0.5)
     }
@@ -235,7 +237,7 @@ struct CheckFeedView: View {
 
             ZStack {
                 Circle()
-                    .fill(Color.brand.teal.opacity(0.08))
+                    .fill(Color.brand.tealSubtle)
                     .frame(width: 96, height: 96)
                 Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 44))
@@ -243,7 +245,7 @@ struct CheckFeedView: View {
             }
 
             VStack(spacing: 8) {
-                Text("You haven't checked anything yet")
+                Text("No checks yet")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
@@ -263,6 +265,7 @@ struct CheckFeedView: View {
     private var bottomButtons: some View {
         VStack(spacing: 10) {
             Button {
+                HapticService.impact(.light)
                 showSession = true
             } label: {
                 HStack(spacing: 8) {
@@ -274,12 +277,12 @@ struct CheckFeedView: View {
                 .foregroundStyle(Color.brand.teal)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(Color.brand.teal.opacity(0.10))
+                .background(Color.brand.tealSubtle)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.brand.teal.opacity(0.25), lineWidth: 1)
-                    )
+                        .stroke(Color.brand.tealBorder, lineWidth: 0.5)
+                )
             }
 
             Button {
@@ -296,7 +299,6 @@ struct CheckFeedView: View {
                 .frame(height: 56)
                 .background(Color.brand.teal)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
-                .shadow(color: Color.brand.teal.opacity(0.3), radius: 12, x: 0, y: 4)
             }
         }
         .padding(.horizontal, 16)
@@ -318,7 +320,7 @@ struct CheckFeedView: View {
 
     private var savingOverlay: some View {
         ZStack {
-            Color.black.opacity(0.3).ignoresSafeArea()
+            Color.black.opacity(0.4).ignoresSafeArea()
             VStack(spacing: 14) {
                 ProgressView().tint(.white).scaleEffect(1.2)
                 Text("Saving check...")
@@ -333,7 +335,7 @@ struct CheckFeedView: View {
 
     private var analysingOverlay: some View {
         ZStack {
-            Color.black.opacity(0.3).ignoresSafeArea()
+            Color.black.opacity(0.4).ignoresSafeArea()
             VStack(spacing: 14) {
                 ProgressView().tint(.white).scaleEffect(1.2)
                 Text("Analysing photo...")

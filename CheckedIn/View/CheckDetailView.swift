@@ -31,6 +31,11 @@ struct CheckDetailView: View {
                     .font(.system(size: 17, weight: .semibold))
             }
         }
+        .onAppear {
+            if verdict.isConfirmed {
+                HapticService.success()
+            }
+        }
     }
 
     // MARK: — Photo
@@ -70,7 +75,7 @@ struct CheckDetailView: View {
 
             closureNote
                 .padding(.horizontal, 16)
-                .padding(.top, 20)
+                .padding(.top, 12)
                 .padding(.bottom, 48)
         }
     }
@@ -119,7 +124,7 @@ struct CheckDetailView: View {
             } else {
                 Text("Check the photo above")
                     .font(.system(size: 15))
-                    .foregroundStyle(Color(red: 0.914, green: 0.769, blue: 0.408))
+                    .foregroundStyle(Color.brand.warning)
             }
         }
     }
@@ -130,7 +135,7 @@ struct CheckDetailView: View {
         VStack(spacing: 0) {
             metaRow(
                 icon: "clock.fill",
-                iconColor: Color(red: 0.165, green: 0.616, blue: 0.561),
+                iconColor: Color.brand.teal,
                 label: "Checked at",
                 value: formattedTime
             )
@@ -140,7 +145,7 @@ struct CheckDetailView: View {
 
             metaRow(
                 icon: "location.fill",
-                iconColor: Color(red: 0.165, green: 0.616, blue: 0.561),
+                iconColor: Color.brand.teal,
                 label: "Location",
                 value: check.locationName.isEmpty ? "Unknown location" : check.locationName
             )
@@ -180,8 +185,8 @@ struct CheckDetailView: View {
     private var closureNote: some View {
         HStack(spacing: 12) {
             Image(systemName: "lock.shield.fill")
-                .font(.system(size: 16))
-                .foregroundStyle(Color(red: 0.165, green: 0.616, blue: 0.561))
+                .font(.system(size: 15))
+                .foregroundStyle(Color.brand.teal)
 
             Text("This photo is your proof. You can trust it.")
                 .font(.system(size: 14))
@@ -192,13 +197,11 @@ struct CheckDetailView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(
-            Color(red: 0.165, green: 0.616, blue: 0.561).opacity(0.07)
-        )
+        .background(Color.brand.tealSubtle)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(red: 0.165, green: 0.616, blue: 0.561).opacity(0.2), lineWidth: 1)
+                .stroke(Color.brand.tealBorder, lineWidth: 0.5)
         )
     }
 
