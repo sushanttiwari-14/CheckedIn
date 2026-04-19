@@ -149,12 +149,25 @@ struct CheckFeedView: View {
             Button {
                 showSettings = true
             } label: {
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 20))
-                    .foregroundStyle(Color(.tertiaryLabel))
-                    .frame(width: 36, height: 36)
+                ZStack {
+                    Circle()
+                        .fill(Color(.secondarySystemBackground))
+                        .overlay(
+                            Circle()
+                                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                        )
+                        .frame(width: 38, height: 38)
+
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Color(.label).opacity(0.75))
+                }
+                .frame(width: 44, height: 44)
+                .contentShape(Circle())
             }
-            .padding(.top, 4)
+            .buttonStyle(.plain)
+            .accessibilityLabel("Settings")
+            .padding(.top, 2)
         }
     }
 

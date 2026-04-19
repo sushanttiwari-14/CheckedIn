@@ -16,21 +16,21 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-
-                voiceSection
+                behaviourSection
                 privacySection
                 dataSection
                 aboutSection
-
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.brand.teal)
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.brand.teal)
                 }
             }
             .alert("Clear All Checks?", isPresented: $viewModel.showClearConfirmation) {
@@ -41,7 +41,7 @@ struct SettingsView: View {
             } message: {
                 Text("This will permanently delete all your saved checks. This cannot be undone.")
             }
-            .alert("All Checks Cleared", isPresented: $viewModel.didClearChecks) {
+            .alert("Checks Cleared", isPresented: $viewModel.didClearChecks) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text("Your check history has been cleared.")
@@ -52,162 +52,133 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: — Voice Section
+    // MARK: — Behaviour
 
-    private var voiceSection: some View {
+    private var behaviourSection: some View {
         Section {
-            HStack {
-                labelIcon(symbol: "speaker.wave.2.fill", color: Color.brand.teal)
-
-                VStack(alignment: .leading, spacing: 2) {
+            Toggle(isOn: $viewModel.voiceConfirmationEnabled) {
+                Label {
                     Text("Voice Confirmation")
-                        .font(.system(size: 15))
-                        .foregroundStyle(.primary)
-                    Text("Speaks the verdict after each check")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                } icon: {
+                    settingsIcon(symbol: "speaker.wave.2.fill", color: Color.brand.teal)
                 }
-
-                Spacer()
-
-                Toggle("", isOn: $viewModel.voiceConfirmationEnabled)
-                    .labelsHidden()
-                    .tint(Color.brand.teal)
             }
-            .padding(.vertical, 4)
+            .tint(Color.brand.teal)
         } header: {
             Text("Behaviour")
+        } footer: {
+            Text("Speaks the verdict aloud after each successful check.")
         }
     }
 
-    // MARK: — Privacy Section
+    // MARK: — Privacy
 
     private var privacySection: some View {
         Section {
-            VStack(alignment: .leading, spacing: 12) {
-                privacyRow(
-                    symbol: "iphone",
-                    color: Color.brand.teal,
-                    title: "Everything stays on your device",
-                    detail: "Photos, locations, and AI results are stored only on this iPhone. Nothing is sent to any server."
-                )
+            privacyRow(
+                symbol: "iphone",
+                color: Color.brand.teal,
+                title: "Stays on your device",
+                subtitle: "Photos and AI results are never sent anywhere."
+            )
 
-                Divider()
+            privacyRow(
+                symbol: "cpu",
+                color: .indigo,
+                title: "AI runs on-device",
+                subtitle: "Apple Vision analyses photos with no internet."
+            )
 
-                privacyRow(
-                    symbol: "cpu",
-                    color: Color.brand.teal,
-                    title: "AI runs on-device",
-                    detail: "Analysis uses Apple's Vision framework. No internet connection is needed or used."
-                )
+            privacyRow(
+                symbol: "clock.arrow.circlepath",
+                color: .orange,
+                title: "Auto-expires after 24 hours",
+                subtitle: "Checks delete themselves. Nothing accumulates."
+            )
 
-                Divider()
-
-                privacyRow(
-                    symbol: "clock.arrow.circlepath",
-                    color: Color.brand.teal,
-                    title: "Checks expire after 24 hours",
-                    detail: "Saved checks are automatically deleted the next day. Nothing accumulates over time."
-                )
-            }
-            .padding(.vertical, 6)
         } header: {
             Text("Privacy")
         }
     }
 
-    // MARK: — Data Section
+    // MARK: — Data
 
     private var dataSection: some View {
         Section {
-            Button {
+            Button(role: .destructive) {
                 viewModel.showClearConfirmation = true
             } label: {
-                HStack {
-                    labelIcon(symbol: "trash.fill", color: .red)
-
+                Label {
                     Text("Clear All Checks")
-                        .font(.system(size: 15))
-                        .foregroundStyle(.red)
-
-                    Spacer()
+                } icon: {
+                    settingsIcon(symbol: "trash.fill", color: .red)
                 }
-                .padding(.vertical, 4)
             }
         } header: {
             Text("Data")
         } footer: {
-            Text("Checks already expire automatically after 24 hours. Use this only if you want to clear everything immediately.")
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
+            Text("Checks expire automatically after 24 hours. Use this only to clear everything immediately.")
         }
     }
 
-    // MARK: — About Section
+    // MARK: — About
 
     private var aboutSection: some View {
         Section {
-            HStack {
-                labelIcon(symbol: "checkmark.shield.fill", color: Color.brand.teal)
-                Text("CheckedIn")
-                    .font(.system(size: 15))
-                    .foregroundStyle(.primary)
-                Spacer()
+            LabeledContent {
                 Text("1.0")
-                    .font(.system(size: 15))
                     .foregroundStyle(.secondary)
+            } label: {
+                Label {
+                    Text("CheckedIn")
+                } icon: {
+                    settingsIcon(symbol: "checkmark.shield.fill", color: Color.brand.teal)
+                }
             }
-            .padding(.vertical, 4)
 
-            HStack {
-                labelIcon(symbol: "heart.fill", color: .pink)
+            Label {
                 Text("Built for peace of mind")
-                    .font(.system(size: 15))
                     .foregroundStyle(.primary)
-                Spacer()
+            } icon: {
+                settingsIcon(symbol: "heart.fill", color: .pink)
             }
-            .padding(.vertical, 4)
 
         } header: {
             Text("About")
         }
     }
 
-    // MARK: — Helpers
+    // MARK: — Reusable icon
 
-    private func labelIcon(symbol: String, color: Color) -> some View {
+    /// Matches Apple's 29×29pt settings icon spec exactly.
+    private func settingsIcon(symbol: String, color: Color) -> some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 7)
+            RoundedRectangle(cornerRadius: 6.5)
                 .fill(color)
-                .frame(width: 30, height: 30)
+                .frame(width: 29, height: 29)
             Image(systemName: symbol)
-                .font(.system(size: 14))
+                .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(.white)
+                .symbolRenderingMode(.hierarchical)
         }
-        .padding(.trailing, 6)
     }
 
-    private func privacyRow(symbol: String, color: Color, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 7)
-                    .fill(color.opacity(0.12))
-                    .frame(width: 30, height: 30)
-                Image(systemName: symbol)
-                    .font(.system(size: 14))
-                    .foregroundStyle(color)
-            }
+    // MARK: — Privacy row
 
-            VStack(alignment: .leading, spacing: 3) {
+    private func privacyRow(symbol: String, color: Color, title: String, subtitle: String) -> some View {
+        Label {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.body)
                     .foregroundStyle(.primary)
-                Text(detail)
-                    .font(.system(size: 13))
+                Text(subtitle)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .lineSpacing(2)
             }
+            .padding(.vertical, 2)
+        } icon: {
+            settingsIcon(symbol: symbol, color: color)
         }
     }
 }
