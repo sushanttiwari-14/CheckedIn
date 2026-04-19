@@ -15,7 +15,12 @@ class SpeechService {
 
     private init() {}
 
+    var isEnabled: Bool {
+        UserDefaults.standard.object(forKey: "checkedin.voiceEnabled") as? Bool ?? true
+    }
+
     func speak(_ text: String) {
+        guard isEnabled else { return }
         guard !synthesizer.isSpeaking else {
             synthesizer.stopSpeaking(at: .immediate)
             return

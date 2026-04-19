@@ -10,6 +10,7 @@ struct CheckFeedView: View {
     @State private var showRecheckSheet = false
     @State private var showSession = false
     @State private var recheckDestination: SafeCheck? = nil
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
@@ -95,6 +96,9 @@ struct CheckFeedView: View {
                     .presentationCornerRadius(24)
                 }
             }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
+            }
             .navigationDestination(item: $recheckDestination) { check in
                 CheckDetailView(check: check)
             }
@@ -125,18 +129,32 @@ struct CheckFeedView: View {
     // MARK: — Header
 
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Image(systemName: "checkmark.shield.fill")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(Color.brand.teal)
-                Text("CheckedIn")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(.primary)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(Color.brand.teal)
+                    Text("CheckedIn")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(.primary)
+                }
+                Text(greetingText)
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
             }
-            Text(greetingText)
-                .font(.system(size: 15))
-                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Button {
+                showSettings = true
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 20))
+                    .foregroundStyle(Color(.tertiaryLabel))
+                    .frame(width: 36, height: 36)
+            }
+            .padding(.top, 4)
         }
     }
 
