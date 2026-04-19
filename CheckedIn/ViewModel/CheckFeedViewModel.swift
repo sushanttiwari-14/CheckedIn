@@ -27,17 +27,22 @@ class CheckFeedViewModel {
     private let locationService = LocationService()
     private let visionService = VisionService()
     private let speechService = SpeechService.shared
+    private let expiryService = ExpiryService.shared
 
     private let recheckWindowMinutes: Int = 30
 
     func setup(context: ModelContext) {
         self.modelContext = context
         locationService.requestPermissionAndStart()
+        expiryService.purgeExpired(from: context)
         fetchChecks()
     }
 
     func fetchChecks() {
         guard let context = modelContext else { return }
+
+        expiryService.purgeExpired(from: context)
+
         let descriptor = FetchDescriptor<SafeCheck>(
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
