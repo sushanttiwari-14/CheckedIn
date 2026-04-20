@@ -11,13 +11,11 @@ import AVFoundation
 struct CameraView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var service = CameraService()
-
     var onPhotoCaptured: (Data) -> Void
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-
             if service.permissionDenied {
                 permissionDeniedView
             } else {
@@ -25,12 +23,8 @@ struct CameraView: View {
                 overlay
             }
         }
-        .onAppear {
-            service.checkPermissionAndSetup()
-        }
-        .onDisappear {
-            service.stopSession()
-        }
+        .onAppear { service.checkPermissionAndSetup() }
+        .onDisappear { service.stopSession() }
         .onChange(of: service.capturedPhotoData) { _, newData in
             if let data = newData {
                 onPhotoCaptured(data)
@@ -40,8 +34,7 @@ struct CameraView: View {
     }
 
     private var cameraPreview: some View {
-        CameraPreviewLayer(session: service.session)
-            .ignoresSafeArea()
+        CameraPreviewLayer(session: service.session).ignoresSafeArea()
     }
 
     private var overlay: some View {
@@ -58,7 +51,7 @@ struct CameraView: View {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 44, height: 44)
                     .background(.ultraThinMaterial)
@@ -80,7 +73,6 @@ struct CameraView: View {
             Text("Point at the appliance or lock")
                 .font(.system(size: 15))
                 .foregroundStyle(.white.opacity(0.8))
-
             captureButton
         }
         .padding(.bottom, 60)
@@ -88,6 +80,7 @@ struct CameraView: View {
 
     private var captureButton: some View {
         Button {
+            HapticService.impact(.medium)
             service.capturePhoto()
         } label: {
             ZStack {
@@ -129,22 +122,20 @@ struct CameraView: View {
 
 struct CameraPreviewLayer: UIViewRepresentable {
     let session: AVCaptureSession
-
     func makeUIView(context: Context) -> PreviewUIView {
         let view = PreviewUIView()
         view.previewLayer.session = session
         view.previewLayer.videoGravity = .resizeAspectFill
         return view
     }
-
     func updateUIView(_ uiView: PreviewUIView, context: Context) {}
 }
 
 class PreviewUIView: UIView {
-    override class var layerClass: AnyClass {
-        AVCaptureVideoPreviewLayer.self
-    }
-    var previewLayer: AVCaptureVideoPreviewLayer {
-        layer as! AVCaptureVideoPreviewLayer
+    override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
+    var previewLayer: AVCaptureVideoPreviewLayer { layer as! AVCaptureVideoPreviewLayer }
+}
+#Preview {
+    CameraView { _ in
     }
 }

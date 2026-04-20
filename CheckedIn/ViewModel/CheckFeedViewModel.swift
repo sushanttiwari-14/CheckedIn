@@ -14,7 +14,6 @@ import CoreLocation
 @Observable
 class CheckFeedViewModel {
     var checks: [SafeCheck] = []
-    var pendingPhotoData: Data? = nil
     var isSaving: Bool = false
     var isAnalysing: Bool = false
     var recentCheckResult: RecentCheckResult? = nil
@@ -23,12 +22,11 @@ class CheckFeedViewModel {
         locationService.permissionDenied
     }
 
+    private(set) var locationService = LocationService()
     private var modelContext: ModelContext?
-    private let locationService = LocationService()
     private let visionService = VisionService()
     private let speechService = SpeechService.shared
     private let expiryService = ExpiryService.shared
-
     private let recheckWindowMinutes: Int = 30
 
     func setup(context: ModelContext) {
@@ -40,9 +38,6 @@ class CheckFeedViewModel {
 
     func fetchChecks() {
         guard let context = modelContext else { return }
-
-        expiryService.purgeExpired(from: context)
-
         let descriptor = FetchDescriptor<SafeCheck>(
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
@@ -55,18 +50,14 @@ class CheckFeedViewModel {
 
     func checkForRecentDuplicate() -> Bool {
         let windowStart = Date().addingTimeInterval(-Double(recheckWindowMinutes * 60))
-
         let recentChecks = checks.filter {
             $0.timestamp > windowStart &&
             !$0.aiLabel.isEmpty &&
             $0.aiLabel != "Analysing..." &&
             $0.aiLabel != "Item"
         }
-
         guard let mostRecent = recentChecks.first else { return false }
-
         let minutesAgo = Int(Date().timeIntervalSince(mostRecent.timestamp) / 60)
-
         recentCheckResult = RecentCheckResult(
             matchedCheck: mostRecent,
             label: mostRecent.aiLabel,
@@ -100,7 +91,6 @@ class CheckFeedViewModel {
         )
 
         context.insert(check)
-
         do {
             try context.save()
             fetchChecks()

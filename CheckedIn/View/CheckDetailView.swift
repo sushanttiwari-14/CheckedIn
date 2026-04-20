@@ -11,6 +11,7 @@ struct CheckDetailView: View {
     let check: SafeCheck
 
     @Environment(\.dismiss) private var dismiss
+    @State private var didFireHaptic = false
 
     private var verdict: VerdictFormatter.Verdict {
         VerdictFormatter.verdict(for: check)
@@ -32,8 +33,10 @@ struct CheckDetailView: View {
             }
         }
         .onAppear {
+            guard !didFireHaptic else { return }
             if verdict.isConfirmed {
                 HapticService.success()
+                didFireHaptic = true
             }
         }
     }
@@ -205,7 +208,7 @@ struct CheckDetailView: View {
         )
     }
 
-    // MARK: — Formatting
+    // MARK: — Time formatting
 
     private var formattedTime: String {
         let cal = Calendar.current

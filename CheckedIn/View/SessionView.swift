@@ -54,7 +54,7 @@ struct SessionView: View {
             viewModel.setup(context: modelContext)
         }
         .fullScreenCover(isPresented: $showCamera) {
-            if let index = sessionChecks_currentIndex() {
+            if let index = currentIndex() {
                 CameraView { photoData in
                     viewModel.submitPhoto(photoData, for: index)
                 }
@@ -79,7 +79,7 @@ struct SessionView: View {
                     if viewModel.isAnalysing {
                         analysingCard
                     } else if let verdict = check.verdict {
-                        verdictCard(verdict: verdict, item: item)
+                        verdictCard(verdict: verdict)
                     } else {
                         cameraPromptCard(item: item)
                     }
@@ -102,13 +102,9 @@ struct SessionView: View {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color(.systemFill))
                         .frame(height: 4)
-
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(red: 0.165, green: 0.616, blue: 0.561))
-                        .frame(
-                            width: geo.size.width * viewModel.progress,
-                            height: 4
-                        )
+                        .fill(Color.brand.teal)
+                        .frame(width: geo.size.width * viewModel.progress, height: 4)
                         .animation(.spring(duration: 0.4), value: viewModel.progress)
                 }
             }
@@ -129,11 +125,11 @@ struct SessionView: View {
         VStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(Color(red: 0.165, green: 0.616, blue: 0.561).opacity(0.10))
+                    .fill(Color.brand.tealSubtle)
                     .frame(width: 72, height: 72)
                 Image(systemName: item.icon)
                     .font(.system(size: 32))
-                    .foregroundStyle(Color(red: 0.165, green: 0.616, blue: 0.561))
+                    .foregroundStyle(Color.brand.teal)
             }
 
             Text(item.label)
@@ -147,12 +143,13 @@ struct SessionView: View {
 
     private func cameraPromptCard(item: SessionItem) -> some View {
         Button {
+            HapticService.impact(.medium)
             showCamera = true
         } label: {
             VStack(spacing: 16) {
                 Image(systemName: "camera.fill")
                     .font(.system(size: 28))
-                    .foregroundStyle(Color(red: 0.165, green: 0.616, blue: 0.561))
+                    .foregroundStyle(Color.brand.teal)
 
                 VStack(spacing: 4) {
                     Text("Take Photo")
@@ -170,8 +167,8 @@ struct SessionView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
-                        Color(red: 0.165, green: 0.616, blue: 0.561).opacity(0.25),
-                        style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                        Color.brand.tealBorder,
+                        style: StrokeStyle(lineWidth: 1, dash: [6, 4])
                     )
             )
         }
@@ -184,7 +181,7 @@ struct SessionView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.2)
-                .tint(Color(red: 0.165, green: 0.616, blue: 0.561))
+                .tint(Color.brand.teal)
             Text("Analysing photo…")
                 .font(.system(size: 15))
                 .foregroundStyle(.secondary)
@@ -197,7 +194,7 @@ struct SessionView: View {
 
     // MARK: — Verdict Card
 
-    private func verdictCard(verdict: VerdictFormatter.Verdict, item: SessionItem) -> some View {
+    private func verdictCard(verdict: VerdictFormatter.Verdict) -> some View {
         HStack(spacing: 16) {
             if let check = viewModel.currentSessionCheck,
                let data = check.photoData,
@@ -235,27 +232,36 @@ struct SessionView: View {
     private func actionButtons(check: SessionCheck) -> some View {
         VStack(spacing: 10) {
             if check.isComplete {
-                Button(action: { viewModel.advanceToNext() }) {
+                Button {
+                    HapticService.impact(isLastItem ? .medium : .light)
+                    viewModel.advanceToNext()
+                } label: {
                     Text(isLastItem ? "Finish" : "Next")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(Color(red: 0.165, green: 0.616, blue: 0.561))
+                        .background(Color.brand.teal)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
             } else {
-                Button(action: { showCamera = true }) {
+                Button {
+                    HapticService.impact(.medium)
+                    showCamera = true
+                } label: {
                     Text("Take Photo")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(Color(red: 0.165, green: 0.616, blue: 0.561))
+                        .background(Color.brand.teal)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
 
-                Button(action: { viewModel.skipCurrent() }) {
+                Button {
+                    HapticService.selection()
+                    viewModel.skipCurrent()
+                } label: {
                     Text("Skip")
                         .font(.system(size: 17))
                         .foregroundStyle(.secondary)
@@ -274,8 +280,9 @@ struct SessionView: View {
         viewModel.currentIndex == viewModel.sessionChecks.count - 1
     }
 
-    private func sessionChecks_currentIndex() -> Int? {
-        viewModel.currentIndex < viewModel.sessionChecks.count ? viewModel.currentIndex : nil
+    private func currentIndex() -> Int? {
+        viewModel.currentIndex < viewModel.sessionChecks.count
+            ? viewModel.currentIndex : nil
     }
 }
 
@@ -302,22 +309,21 @@ struct SessionClosureView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 40)
         }
+        .onAppear {
+            HapticService.success()
+        }
     }
-
-    // MARK: — Symbol
 
     private var closureSymbol: some View {
         ZStack {
             Circle()
-                .fill(Color(red: 0.322, green: 0.718, blue: 0.533).opacity(0.12))
+                .fill(Color.brand.safeGreen.opacity(0.12))
                 .frame(width: 88, height: 88)
             Image(systemName: "checkmark.shield.fill")
                 .font(.system(size: 44))
-                .foregroundStyle(Color(red: 0.322, green: 0.718, blue: 0.533))
+                .foregroundStyle(Color.brand.safeGreen)
         }
     }
-
-    // MARK: — Text
 
     private var closureText: some View {
         VStack(spacing: 8) {
@@ -331,8 +337,6 @@ struct SessionClosureView: View {
                 .foregroundStyle(.secondary)
         }
     }
-
-    // MARK: — Summary List
 
     private var summaryList: some View {
         VStack(spacing: 1) {
@@ -377,15 +381,11 @@ struct SessionClosureView: View {
     }
 
     private func rowIconColor(check: SessionCheck) -> Color {
-        if !check.isComplete {
-            return Color(.tertiaryLabel)
-        }
+        if !check.isComplete { return Color(.tertiaryLabel) }
         return check.verdict?.isConfirmed == true
-            ? Color(red: 0.322, green: 0.718, blue: 0.533)
-            : Color(red: 0.914, green: 0.769, blue: 0.408)
+            ? Color.brand.safeGreen
+            : Color.brand.warning
     }
-
-    // MARK: — Done Button
 
     private var doneButton: some View {
         Button(action: onDone) {
@@ -394,14 +394,20 @@ struct SessionClosureView: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
-                .background(Color(red: 0.165, green: 0.616, blue: 0.561))
+                .background(Color.brand.teal)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
-                .shadow(
-                    color: Color(red: 0.165, green: 0.616, blue: 0.561).opacity(0.3),
-                    radius: 12, x: 0, y: 4
-                )
         }
     }
+}
+
+#Preview("Step Screen") {
+    SessionView(locationService: LocationService())
+}
+
+#Preview("Closure Screen") {
+    let vm = SessionViewModel(locationService: LocationService())
+    vm.sessionComplete = true
+    return SessionClosureView(viewModel: vm, onDone: {})
 }
 #Preview("Step Screen") {
     SessionView(locationService: LocationService())

@@ -68,16 +68,18 @@ struct CheckFeedView: View {
                 }
             }
             .fullScreenCover(isPresented: $showSession) {
-                SessionView(locationService: LocationService())
+                SessionView(locationService: viewModel.locationService)
             }
             .sheet(isPresented: $showRecheckSheet) {
                 if let result = viewModel.recentCheckResult {
                     RecheckFrictionSheet(
                         result: result,
                         onViewLastCheck: {
-                            recheckDestination = result.matchedCheck
                             showRecheckSheet = false
                             viewModel.clearRecentCheckResult()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                recheckDestination = result.matchedCheck
+                            }
                         },
                         onCheckAgain: {
                             showRecheckSheet = false
@@ -104,6 +106,12 @@ struct CheckFeedView: View {
             }
             .onAppear {
                 viewModel.setup(context: modelContext)
+            }
+            .onChange(of: showSession) { _, isShowing in
+                if !isShowing { viewModel.fetchChecks() }
+            }
+            .onChange(of: showSettings) { _, isShowing in
+                if !isShowing { viewModel.fetchChecks() }
             }
             .overlay {
                 if viewModel.isSaving {

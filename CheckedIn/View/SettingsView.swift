@@ -64,6 +64,19 @@ struct SettingsView: View {
                 }
             }
             .tint(Color.brand.teal)
+
+            if viewModel.voiceConfirmationEnabled {
+                Button {
+                    SpeechService.shared.speak("Stove is off.")
+                } label: {
+                    Label {
+                        Text("Test Voice")
+                            .foregroundStyle(.primary)
+                    } icon: {
+                        settingsIcon(symbol: "play.fill", color: .indigo)
+                    }
+                }
+            }
         } header: {
             Text("Behaviour")
         } footer: {
@@ -81,21 +94,18 @@ struct SettingsView: View {
                 title: "Stays on your device",
                 subtitle: "Photos and AI results are never sent anywhere."
             )
-
             privacyRow(
                 symbol: "cpu",
                 color: .indigo,
                 title: "AI runs on-device",
                 subtitle: "Apple Vision analyses photos with no internet."
             )
-
             privacyRow(
                 symbol: "clock.arrow.circlepath",
                 color: .orange,
                 title: "Auto-expires after 24 hours",
                 subtitle: "Checks delete themselves. Nothing accumulates."
             )
-
         } header: {
             Text("Privacy")
         }
@@ -142,7 +152,6 @@ struct SettingsView: View {
             } icon: {
                 settingsIcon(symbol: "heart.fill", color: .pink)
             }
-
         } header: {
             Text("About")
         }
@@ -150,7 +159,6 @@ struct SettingsView: View {
 
     // MARK: — Reusable icon
 
-    /// Matches Apple's 29×29pt settings icon spec exactly.
     private func settingsIcon(symbol: String, color: Color) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 6.5)
@@ -182,7 +190,6 @@ struct SettingsView: View {
         }
     }
 }
-
 #Preview {
     SettingsView()
 }

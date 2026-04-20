@@ -6,27 +6,31 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct VerdictFormatter {
 
     struct Verdict {
-        let headline: String        // "Front door is locked"
-        let symbol: String          // SF Symbol name
-        let symbolColor: Color      // semantic color
-        let isConfirmed: Bool       // drives green vs amber tint
+        let headline: String
+        let symbol: String
+        let symbolColor: Color
+        let isConfirmed: Bool
     }
 
     static func verdict(for check: SafeCheck) -> Verdict {
         let state = check.aiState.uppercased()
         let label = check.aiLabel
 
-        let isUncertain = state.contains("CHECK THIS") || state.contains("CHECKING") || check.aiState == "Please wait" || check.aiState == "Analysing..."
+        let isUncertain = state.contains("CHECK THIS") ||
+            state.contains("CHECKING") ||
+            check.aiState == "Please wait" ||
+            check.aiState == "Analysing..."
 
         if isUncertain {
             return Verdict(
                 headline: "Analysing your \(label.lowercased())…",
                 symbol: "clock.fill",
-                symbolColor: .secondary,
+                symbolColor: Color(.secondaryLabel),
                 isConfirmed: false
             )
         }
@@ -37,7 +41,9 @@ struct VerdictFormatter {
         return Verdict(
             headline: headline,
             symbol: isPositive ? "checkmark.circle.fill" : "exclamationmark.triangle.fill",
-            symbolColor: isPositive ? Color(red: 0.322, green: 0.718, blue: 0.533) : Color(red: 0.914, green: 0.769, blue: 0.408),
+            symbolColor: isPositive
+                ? Color(red: 0.322, green: 0.718, blue: 0.533)
+                : Color(red: 0.914, green: 0.769, blue: 0.408),
             isConfirmed: isPositive
         )
     }
