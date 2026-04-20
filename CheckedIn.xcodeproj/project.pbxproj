@@ -10,9 +10,22 @@
 		DF76F42F2F8AB1E400EC094E /* CheckedIn.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CheckedIn.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		DF7007B22F96B1A400932133 /* Exceptions for "CheckedIn" folder in "CheckedIn" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = DF76F42E2F8AB1E400EC094E /* CheckedIn */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DF76F4312F8AB1E400EC094E /* CheckedIn */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DF7007B22F96B1A400932133 /* Exceptions for "CheckedIn" folder in "CheckedIn" target */,
+			);
 			path = CheckedIn;
 			sourceTree = "<group>";
 		};
@@ -256,13 +269,15 @@
 				DEVELOPMENT_TEAM = 39XHM26DBQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "CheckedIn needs camera access to photograph your appliances and locks.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "CheckedIn uses your location to record where each safety check was made.";
+				INFOPLIST_FILE = CheckedIn/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "CheckedIn uses your camera to photograph appliances and locks as proof of checking.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "CheckedIn adds your location to each check so you know exactly where you were when you checked.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "CheckedIn speaks a confirmation after each successful check.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -291,13 +306,15 @@
 				DEVELOPMENT_TEAM = 39XHM26DBQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "CheckedIn needs camera access to photograph your appliances and locks.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "CheckedIn uses your location to record where each safety check was made.";
+				INFOPLIST_FILE = CheckedIn/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "CheckedIn uses your camera to photograph appliances and locks as proof of checking.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "CheckedIn adds your location to each check so you know exactly where you were when you checked.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "CheckedIn speaks a confirmation after each successful check.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

@@ -10,10 +10,22 @@ import SwiftData
 
 @main
 struct CheckedInApp: App {
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var modelContainer: ModelContainer = {
+        try! ModelContainer(for: SafeCheck.self)
+    }()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onChange(of: scenePhase) { _, newPhase in
+                    if newPhase == .active {
+                        ExpiryService.shared.purgeExpired(
+                            from: modelContainer.mainContext
+                        )
+                    }
+                }
         }
-        .modelContainer(for: SafeCheck.self)
+        .modelContainer(modelContainer)
     }
 }
