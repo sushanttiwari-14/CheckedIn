@@ -4,31 +4,60 @@
 //
 //  Created by sushant tiwari on 14/04/26.
 //
+//
+//  VisionService.swift
+//  CheckedIn
+//
 
 import Vision
 import UIKit
 
-class VisionService {
+final class VisionService {
 
-    func analyse(imageData: Data, completion: @escaping (String, String, Double) -> Void) {
+    private let queue = DispatchQueue(label: "vision.queue", qos: .userInitiated)
+    private var isProcessing = false
 
-        guard let image = UIImage(data: imageData),
-              let cgImage = image.cgImage else {
-            completion("Item", "CHECK THIS", 0.0)
-            return
-        }
+    func analyse(imageData: Data,
+                 completion: @escaping (String, String, Double) -> Void) {
 
-        let request = VNClassifyImageRequest { request, error in
+        queue.async { [weak self] in
+            guard let self else { return }
 
-            if let error {
-                print("Vision error: \(error.localizedDescription)")
-                completion("Item", "CHECK THIS", 0.0)
+            // Prevent overlapping requests
+            guard !self.isProcessing else { return }
+            self.isProcessing = true
+
+            defer { self.isProcessing = false }
+
+            // Decode image safely
+            guard let rawImage = UIImage(data: imageData) else {
+                self.finish("Item", "CHECK THIS", 0.0, completion)
                 return
             }
 
-            guard let results = request.results as? [VNClassificationObservation],
+            // Downscale (critical for memory stability)
+            let image = self.resizeImage(rawImage)
+
+            guard let cgImage = image.cgImage else {
+                self.finish("Item", "CHECK THIS", 0.0, completion)
+                return
+            }
+
+            let request = VNClassifyImageRequest()
+
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+
+            do {
+                try handler.perform([request])
+            } catch {
+                print("Vision handler error:", error.localizedDescription)
+                self.finish("Item", "CHECK THIS", 0.0, completion)
+                return
+            }
+
+            guard let results = request.results,
                   let top = results.first(where: { $0.confidence > 0.1 }) else {
-                completion("Item", "CHECK THIS", 0.0)
+                self.finish("Item", "CHECK THIS", 0.0, completion)
                 return
             }
 
@@ -36,24 +65,43 @@ class VisionService {
             let confidence = Double(top.confidence)
             let state = Self.inferState(label: label, confidence: confidence)
 
-            DispatchQueue.main.async {
-                completion(label, state, confidence)
-            }
-        }
-
-        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                try handler.perform([request])
-            } catch {
-                print("Handler error: \(error.localizedDescription)")
-                DispatchQueue.main.async {
-                    completion("Item", "CHECK THIS", 0.0)
-                }
-            }
+            self.finish(label, state, confidence, completion)
         }
     }
+
+    // MARK: - Helpers
+
+    private func finish(_ label: String,
+                        _ state: String,
+                        _ confidence: Double,
+                        _ completion: @escaping (String, String, Double) -> Void) {
+
+        DispatchQueue.main.async {
+            completion(label, state, confidence)
+        }
+    }
+
+    private func resizeImage(_ image: UIImage) -> UIImage {
+        let maxDimension: CGFloat = 512
+
+        let aspectRatio = image.size.width / image.size.height
+        let newSize: CGSize
+
+        if aspectRatio > 1 {
+            newSize = CGSize(width: maxDimension,
+                             height: maxDimension / aspectRatio)
+        } else {
+            newSize = CGSize(width: maxDimension * aspectRatio,
+                             height: maxDimension)
+        }
+
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+    }
+
+    // MARK: - Mapping
 
     private static func mapLabel(_ identifier: String) -> String {
         let id = identifier.lowercased()
