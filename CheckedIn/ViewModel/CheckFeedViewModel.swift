@@ -12,6 +12,7 @@ import UIKit
 import CoreLocation
 
 @Observable
+@MainActor
 class CheckFeedViewModel {
     var checks: [SafeCheck] = []
     var isSaving: Bool = false
@@ -107,24 +108,25 @@ class CheckFeedViewModel {
 
         visionService.analyse(imageData: photoData) { [weak self] label, state, confidence in
             guard let self else { return }
+            Task { @MainActor in
+                check.aiLabel = label
+                check.aiState = state
+                check.confidenceScore = confidence
+                check.isVerified = confidence >= 0.75
 
-            check.aiLabel = label
-            check.aiState = state
-            check.confidenceScore = confidence
-            check.isVerified = confidence >= 0.75
+                do {
+                    try context.save()
+                    self.fetchChecks()
+                } catch {
+                    print("Analysis save error: \(error)")
+                }
 
-            do {
-                try context.save()
-                self.fetchChecks()
-            } catch {
-                print("Analysis save error: \(error)")
-            }
+                self.isAnalysing = false
 
-            self.isAnalysing = false
-
-            if check.isVerified {
-                let verdict = VerdictFormatter.verdict(for: check)
-                self.speechService.speak(verdict.headline)
+                if check.isVerified {
+                    let verdict = VerdictFormatter.verdict(for: check)
+                    self.speechService.speak(verdict.headline)
+                }
             }
         }
     }
