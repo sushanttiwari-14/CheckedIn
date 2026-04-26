@@ -307,6 +307,8 @@ struct CheckFeedView: View {
                 .frame(height: 56)
                 .background(Color.brand.teal)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
+                .scaleEffect(showCamera ? 0.97 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: showCamera)
             }
         }
         .padding(.horizontal, 16)
