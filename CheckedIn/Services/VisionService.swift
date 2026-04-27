@@ -68,7 +68,6 @@ final class VisionService {
             self.finish(label, state, confidence, completion)
         }
     }
-
     // MARK: - Helpers
 
     private func finish(_ label: String,
@@ -100,7 +99,6 @@ final class VisionService {
             image.draw(in: CGRect(origin: .zero, size: newSize))
         }
     }
-
     // MARK: - Mapping
 
     private static func mapLabel(_ identifier: String) -> String {

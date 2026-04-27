@@ -237,7 +237,7 @@ struct CheckFeedView: View {
             .kerning(0.5)
     }
 
-    // MARK: — Empty state
+    // MARK: — Empty state of home screen 
 
     private var emptyState: some View {
         VStack(spacing: 20) {
