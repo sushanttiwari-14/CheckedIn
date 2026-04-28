@@ -32,11 +32,9 @@ struct CameraView: View {
             }
         }
     }
-
     private var cameraPreview: some View {
         CameraPreviewLayer(session: service.session).ignoresSafeArea()
     }
-
     private var overlay: some View {
         VStack {
             topBar
@@ -44,7 +42,6 @@ struct CameraView: View {
             bottomBar
         }
     }
-
     private var topBar: some View {
         HStack {
             Button {
