@@ -237,8 +237,7 @@ struct CheckFeedView: View {
             .kerning(0.5)
     }
 
-    // MARK: — Empty state of home screen 
-
+    // MARK: — Empty state
     private var emptyState: some View {
         VStack(spacing: 20) {
             Spacer(minLength: 60)
@@ -291,6 +290,8 @@ struct CheckFeedView: View {
                     RoundedRectangle(cornerRadius: 14)
                         .stroke(Color.brand.tealBorder, lineWidth: 0.5)
                 )
+                .scaleEffect(showSession ? 0.97 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: showSession)
             }
 
             Button {
