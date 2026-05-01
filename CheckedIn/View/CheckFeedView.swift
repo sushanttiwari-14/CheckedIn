@@ -1,10 +1,10 @@
-// CheckFeedView.swift
-
 import SwiftUI
 import SwiftData
 
+@available(iOS 18.0, *)
 struct CheckFeedView: View {
     @Environment(\.modelContext) private var modelContext
+    @State private var scrollPosition = ScrollPosition(idType: String.self)
     @State private var viewModel = CheckFeedViewModel()
     @State private var showCamera = false
     @State private var showRecheckSheet = false
@@ -18,45 +18,50 @@ struct CheckFeedView: View {
                 Color(.systemGroupedBackground)
                     .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-
-                        headerSection
-                            .padding(.horizontal, 20)
-                            .padding(.top, 16)
-                            .padding(.bottom, 24)
-
-                        if viewModel.locationPermissionDenied {
-                            locationDeniedBanner
-                                .padding(.horizontal, 16)
-                                .padding(.bottom, 16)
-                        }
-
-                        if !viewModel.checks.isEmpty {
-                            sectionLabel("Recent Checks")
-                                .padding(.horizontal, 16)
-                                .padding(.bottom, 10)
-
-                            LazyVStack(spacing: 1) {
-                                ForEach(viewModel.checks, id: \.id) { check in
-                                    NavigationLink(
-                                        destination: CheckDetailView(check: check)
-                                    ) {
-                                        CheckCardView(check: check)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
+                if #available(iOS 18.0, *) {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            
+                            headerSection
+                                .padding(.horizontal, 20)
+                                .padding(.top, 16)
+                                .padding(.bottom, 24)
+                            
+                            if viewModel.locationPermissionDenied {
+                                locationDeniedBanner
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, 16)
                             }
-                            .background(Color(.secondarySystemGroupedBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .padding(.horizontal, 16)
-                        } else {
-                            emptyState
+                            
+                            if !viewModel.checks.isEmpty {
+                                sectionLabel("Recent Checks")
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, 10)
+                                
+                                LazyVStack(spacing: 1) {
+                                    ForEach(viewModel.checks, id: \.id) { check in
+                                        NavigationLink(
+                                            destination: CheckDetailView(check: check)
+                                        ) {
+                                            CheckCardView(check: check)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .background(Color(.secondarySystemGroupedBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                                 .padding(.horizontal, 16)
+                            } else {
+                                emptyState
+                                    .padding(.horizontal, 16)
+                            }
+                            
+                            Spacer(minLength: 130)
                         }
-
-                        Spacer(minLength: 130)
                     }
+                    .scrollPosition($scrollPosition)
+                } else {
+                    // Fallback on earlier versions
                 }
 
                 bottomButtons
@@ -147,6 +152,16 @@ struct CheckFeedView: View {
                     Text("CheckedIn")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.primary)
+                        .onTapGesture {
+                            HapticService.selection()
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                if #available(iOS 18.0, *) {
+                                    scrollPosition.scrollTo(edge: .top)
+                                } else {
+                                    // Fallback on earlier versions
+                                }
+                            }
+                        }
                 }
                 Text(greetingText)
                     .font(.system(size: 15))
@@ -361,5 +376,9 @@ struct CheckFeedView: View {
 }
 
 #Preview {
-    CheckFeedView()
+    if #available(iOS 18.0, *) {
+        CheckFeedView()
+    } else {
+        // Fallback on earlier versions
+    }
 }
