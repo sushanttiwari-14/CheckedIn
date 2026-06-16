@@ -2,7 +2,7 @@
 
 > One check. Complete proof.
 
-A native iOS app for people with OCD-style checking anxiety. Photograph your stove, door, or iron — get objective proof with timestamp, location, and AI verdict. No more going back.
+A native iOS app for people with OCD-style checking anxiety. Photograph your stove, door, or iron get objective proof with timestamp, location, and AI verdict. No more going back.
 
 ---
 
